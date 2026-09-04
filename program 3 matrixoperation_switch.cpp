@@ -130,3 +130,33 @@ int main() {
 
     return 0;
 }
+
+output:
+Enter the number of rows and columns for matrix
+1:2
+2
+Enter the elements of Matrix 1:
+2
+2
+2
+2
+Enter the number of rows and columns for Matrix 2:
+2
+2
+Enter the elements of Matrix 2:
+2
+2
+2
+2
+
+Select operation to perform:
+1.Add Matrices
+2.Subtract Matrices
+3.Multiply Matrices
+4.Transpose Matrix 1
+5.Transpose Matrix 2
+Enter your Choice:1
+
+Result of Addition:
+4 4
+4 4
