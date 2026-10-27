@@ -1,0 +1,240 @@
+#include <iostream>
+#include <string>
+#include <vector>
+#include <fstream>
+#include <iomanip>
+#include <stdexcept>
+
+using namespace std;
+
+
+class Advisory {
+public:
+    virtual void giveAdvice() = 0; 
+    virtual ~Advisory() {}
+};
+
+
+class Crop : public Advisory {
+protected:
+    string name;
+    double area;
+    string season;
+    double yieldPerAcre;
+
+    
+    static int cropCount;
+
+public:
+    
+    Crop() : name("Unknown"), area(0.0), season("Unknown"), yieldPerAcre(0.0) {
+        cropCount++;
+    }
+
+    
+    Crop(string n, double a, string s, double y) : name(n), area(a), season(s), yieldPerAcre(y) {
+        
+        if (a < 0 || y < 0) {
+            throw invalid_argument("Area and yield per acre cannot be negative!");
+        }
+        cropCount++;
+    }
+
+    
+    virtual ~Crop() {
+        cropCount--;
+    }
+
+    
+    virtual double calculateTotalYield() const {
+        return area * yieldPerAcre;
+    }
+
+    
+    virtual void display() const {
+        cout << left << setw(15) << name 
+             << setw(10) << area 
+             << setw(12) << season 
+             << setw(15) << yieldPerAcre 
+             << setw(15) << calculateTotalYield();
+    }
+
+    
+    bool operator>(const Crop& other) const {
+        return this->calculateTotalYield() > other.calculateTotalYield();
+    }
+
+    
+    string getName() const { return name; }
+    double getArea() const { return area; }
+    string getSeason() const { return season; }
+    double getYieldPerAcre() const { return yieldPerAcre; }
+
+
+    static int getCropCount() {
+        return cropCount;
+    }
+};
+
+
+int Crop::cropCount = 0;
+
+
+// 2. Derived class CerealCrop using inheritance
+class CerealCrop : public Crop {
+private:
+    string fertilizerType; // Specific attribute
+
+public:
+    CerealCrop(string n, double a, string s, double y, string f) 
+        : Crop(n, a, s, y), fertilizerType(f) {}
+
+    void display() const override {
+        Crop::display();
+        cout << setw(20) << ("Fertilizer: " + fertilizerType) << endl;
+    }
+
+    // 6. Implementation of pure virtual function
+    void giveAdvice() override {
+        cout << "[Advice - " << name << "]: Apply " << fertilizerType 
+             << " during the initial growth stage. Ensure uniform watering.\n";
+    }
+};
+
+
+
+class VegetableCrop : public Crop {
+private:
+    int irrigationFrequency; // Specific attribute (in days)
+
+public:
+    VegetableCrop(string n, double a, string s, double y, int freq) 
+        : Crop(n, a, s, y), irrigationFrequency(freq) {}
+
+    void display() const override {
+        Crop::display();
+        cout << setw(20) << ("Irrigate every " + to_string(irrigationFrequency) + " days") << endl;
+    }
+
+    
+    void giveAdvice() override {
+        cout << "[Advice - " << name << "]: Maintain strict irrigation cycles every " 
+             << irrigationFrequency << " days to prevent root diseases.\n";
+    }
+};
+
+
+// 7. File Handling: Save crop data to file
+void saveToFile(const vector<Crop*>& farm, const string& filename) {
+    ofstream outFile(filename);
+    if (!outFile) {
+        throw runtime_error("Error: Unable to open file for writing.");
+    }
+    for (const auto& crop : farm) {
+        outFile << crop->getName() << "," << crop->getArea() << "," 
+                << crop->getSeason() << "," << crop->getYieldPerAcre() << "\n";
+    }
+    outFile.close();
+}
+
+
+void readFromFile(const string& filename) {
+    ifstream inFile(filename);
+    if (!inFile) {
+        cout << "No file records found to read.\n";
+        return;
+    }
+    cout << "\n--- Reading Saved Crop Data from File ---\n";
+    string line;
+    while (getline(inFile, line)) {
+        cout << line << endl;
+    }
+    inFile.close();
+}
+
+
+int main() {
+    vector<Crop*> farm;
+
+    try {
+        cout << "=== SMART FARM MANAGEMENT SYSTEM ===\n\n";
+
+        farm.push_back(new CerealCrop("Wheat", 50.0, "Winter", 2.5, "NPK 20-20-20"));
+        farm.push_back(new VegetableCrop("Tomato", 15.5, "Spring", 4.0, 3));
+        farm.push_back(new CerealCrop("Rice", 75.0, "Monsoon", 3.2, "Urea"));
+        
+     
+        cout << "Total crop variants registered in memory: " << Crop::getCropCount() << "\n\n";
+
+   
+        cout << left << setw(15) << "Crop Name" 
+             << setw(10) << "Area" 
+             << setw(12) << "Season" 
+             << setw(15) << "Yield/Acre" 
+             << setw(15) << "Total Yield" 
+             << setw(20) << "Specific Information" << endl;
+        cout << string(87, '-') << endl;
+        
+        for (const auto& crop : farm) {
+            crop->display(); 
+        }
+        cout << endl;
+
+      
+        cout << "--- Automated Farming Advisory Service ---\n";
+        for (const auto& crop : farm) {
+            crop->giveAdvice();
+        }
+        cout << endl;
+
+      
+        cout << "--- Crop Yield Performance Comparison ---\n";
+        if (*farm[2] > *farm[0]) {
+            cout << farm[2]->getName() << " has a strictly greater total production than " << farm[0]->getName() << ".\n";
+        } else {
+            cout << farm[0]->getName() << " has equal or greater production than " << farm[2]->getName() << ".\n";
+        }
+        cout << endl;
+
+        
+        saveToFile(farm, "farm_records.txt");
+        cout << "Data saved successfully to 'farm_records.txt'.\n";
+        readFromFile("farm_records.txt");
+
+   
+        cout << "\nTesting System Exception Safeguards...\n";
+        CerealCrop invalidCrop("Maize", -10.5, "Summer", 3.0, "DAP");
+
+    } catch (const exception& e) {
+        cout << "Exception Caught successfully: " << e.what() << endl;
+    }
+
+  
+    for (auto& crop : farm) {
+        delete crop;
+    }
+    
+    return 0;
+}
+output:
+=== SMART FARM MANAGEMENT SYSTEM ===
+
+Total crop variants registered in memory: 3
+
+Crop Name      Area      Season      Yield/Acre     Total Yield    Specific Information
+---------------------------------------------------------------------------------------
+ERROR!
+Wheat          50        Winter      2.5            125            Fertilizer: NPK 20-20-20
+Tomato         15.5      Spring      4              62             Irrigate every 3 days
+Rice           75        Monsoon     3.2            240            Fertilizer: Urea    
+
+--- Automated Farming Advisory Service ---
+[Advice - Wheat]: Apply NPK 20-20-20 during the initial growth stage. Ensure uniform watering.
+[Advice - Tomato]: Maintain strict irrigation cycles every 3 days to prevent root diseases.
+[Advice - Rice]: Apply Urea during the initial growth stage. Ensure uniform watering.
+
+--- Crop Yield Performance Comparison ---
+Rice has a strictly greater total production than Wheat.
+
+Exception Caught successfully: Error: Unable to open file for writing.
+
