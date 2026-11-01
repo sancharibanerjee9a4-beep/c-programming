@@ -1,0 +1,82 @@
+#include <iostream>
+using namespace std;
+
+// Forward declaration needed between ClassA & ClassB definitions:
+// Refers to ClassB before ClassB has been fully defined.
+class ClassB;
+
+class ClassA {
+private:
+    int num1; // private member - normally not accessible outside the class
+
+public:
+    ClassA(int n) : num1(n) {}
+
+    void display() const {
+        cout << "ClassA number = " << num1 << endl;
+    }
+
+    // Declares swapNumbers as a friend. It is NOT a member of ClassA,
+    // but it IS GIVEN allowed to access ClassA's private data.
+    friend void swapNumbers(ClassA &a, ClassB &b);
+};
+
+class ClassB {
+private:
+    int num2; // private member
+
+public:
+    ClassB(int n) : num2(n) {}
+
+    void display() const {
+        cout << "ClassB number = " << num2 << endl;
+    }
+
+    // Same function is also declared a friend of ClassB,
+    // so it can access ClassB's private data too.
+    friend void swapNumbers(ClassA &a, ClassB &b);
+};
+
+// Definition of the friend function
+// Because it is a friend of BOTH classes, it can directly touch
+// ClassA and ClassB through 'num1' & 'num2' in each class.
+void swapNumbers(ClassA &a, ClassB &b) {
+    int temp = a.num1;
+    a.num1 = b.num2;
+    b.num2 = temp;
+}
+
+int main() {
+    int x, y;
+
+    cout << "Enter first number (for ClassA object) : ";
+    cin >> x;
+    cout << "Enter second number (for ClassB object) : ";
+    cin >> y;
+
+    ClassA objA(x);
+    ClassB objB(y);
+
+    cout << "\nBefore swapping:\n";
+    objA.display();
+    objB.display();
+
+    swapNumbers(objA, objB); // friend function call - not objA.swapNumbers(...)
+
+    cout << "\nAfter swapping:\n";
+    objA.display();
+    objB.display();
+
+    return 0;
+}
+OUTPUT
+Enter first number (for ClassA object) : 4
+Enter second number (for ClassB object) : 5
+
+Before swapping:
+ClassA number = 4
+ClassB number = 5
+
+After swapping:
+ClassA number = 5
+ClassB number = 4
